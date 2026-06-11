@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Sign In — SV Quiz</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+
+<div class="login-page">
+  <div class="login-card">
+
+    <div class="login-card__header">
+      <div class="login-card__wordmark">SV <span>Quiz</span></div>
+      <p class="login-card__tagline">Assessment platform for students and professionals</p>
+    </div>
+
+    <form method="POST" action="{{ url_for('login') }}" novalidate>
+
+      <div class="field">
+        <label class="field__label" for="name">Full name</label>
+        <input
+          class="field__input {{ 'field__input--error' if errors and errors.name }}"
+          type="text"
+          id="name"
+          name="name"
+          value="{{ name or '' }}"
+          autocomplete="name"
+          autofocus
+        >
+        {% if errors and errors.name %}
+        <span class="field__error">{{ errors.name }}</span>
+        {% endif %}
+      </div>
+
+      <div class="field">
+        <label class="field__label" for="email">Email address</label>
+        <input
+          class="field__input {{ 'field__input--error' if errors and errors.email }}"
+          type="email"
+          id="email"
+          name="email"
+          value="{{ email or '' }}"
+          autocomplete="email"
+        >
+        {% if errors and errors.email %}
+        <span class="field__error">{{ errors.email }}</span>
+        {% endif %}
+      </div>
+
+      <button type="submit" class="btn btn--primary btn--full" style="margin-top:.5rem;">
+        Continue
+      </button>
+
+    </form>
+
+    <div class="login-card__meta">
+      <div class="login-card__meta-item">
+        <span class="login-card__meta-dot"></span>5 quiz categories
+      </div>
+      <div class="login-card__meta-item">
+        <span class="login-card__meta-dot"></span>50 questions
+      </div>
+      <div class="login-card__meta-item">
+        <span class="login-card__meta-dot"></span>30 seconds per question
+      </div>
+      <div class="login-card__meta-item">
+        <span class="login-card__meta-dot"></span>Pass mark: 60%
+      </div>
+    </div>
+
+  </div>
+</div>
+
+</body>
+</html>

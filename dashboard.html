@@ -1,0 +1,97 @@
+{% extends "base.html" %}
+{% block title %}Dashboard — SV Quiz{% endblock %}
+
+{% block content %}
+
+<div class="dash-header">
+  <div class="dash-header__inner">
+    <div>
+      <div class="dash-header__title">Welcome back, {{ user.name.split(' ')[0] }}</div>
+      <div class="dash-header__sub">Select a category to begin an assessment.</div>
+    </div>
+    <div class="stat-row">
+      <div class="stat-cell">
+        <div class="stat-cell__val">{{ stats.attempts }}</div>
+        <div class="stat-cell__lbl">Attempts</div>
+      </div>
+      <div class="stat-cell">
+        <div class="stat-cell__val">{{ stats.passed }}</div>
+        <div class="stat-cell__lbl">Passed</div>
+      </div>
+      <div class="stat-cell">
+        <div class="stat-cell__val">{{ stats.avg_score }}%</div>
+        <div class="stat-cell__lbl">Average</div>
+      </div>
+      <div class="stat-cell">
+        <div class="stat-cell__val">{{ stats.best_score }}%</div>
+        <div class="stat-cell__lbl">Best</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="page">
+
+  <div class="section-header" style="margin-bottom:1.25rem;">
+    <h2>Assessments</h2>
+    <span class="section-header__sub">{{ categories|length }} categories available</span>
+  </div>
+
+  <div class="cat-grid">
+    {% for cat in categories %}
+    <a href="{{ url_for('quiz', cat_id=cat.id) }}" class="cat-card">
+      <div class="cat-card__stripe" style="background:{{ cat.color }};"></div>
+      <div class="cat-card__name">{{ cat.name }}</div>
+      <div class="cat-card__desc">{{ cat.description }}</div>
+      <div class="cat-card__footer">
+        <span class="cat-card__count">{{ cat.question_count }} questions &middot; 30 s each</span>
+        <span class="cat-card__start">Start &rarr;</span>
+      </div>
+    </a>
+    {% endfor %}
+  </div>
+
+  <div style="margin-top:2.5rem;">
+    <div class="section-header">
+      <h2>Recent Activity</h2>
+      {% if history %}
+      <a href="{{ url_for('leaderboard') }}" class="section-header__action">Leaderboard &rarr;</a>
+      {% endif %}
+    </div>
+
+    <div class="data-table">
+      {% if not history %}
+      <div class="data-table__empty">
+        No attempts recorded. Select a category above to begin.
+      </div>
+      {% else %}
+      <div class="data-table__head">
+        <span>Category</span>
+        <span>Score</span>
+        <span>Correct</span>
+        <span>Status</span>
+        <span>Date</span>
+      </div>
+      {% for r in history %}
+      {% set cat = cat_map.get(r.category, {}) %}
+      <div class="data-table__row">
+        <span style="font-weight:500;">{{ cat.get('name', r.category) }}</span>
+        <span style="font-weight:600;color:{{ 'var(--c-success)' if r.percentage >= 60 else 'var(--c-danger)' }};">
+          {{ r.percentage }}%
+        </span>
+        <span style="color:var(--c-text-3);">{{ r.correct }}/{{ r.total }}</span>
+        <span>
+          <span class="badge {{ 'badge--pass' if r.passed else 'badge--fail' }}">
+            {{ 'Pass' if r.passed else 'Fail' }}
+          </span>
+        </span>
+        <span style="color:var(--c-text-3);font-size:.8rem;">{{ r.date[:10] }}</span>
+      </div>
+      {% endfor %}
+      {% endif %}
+    </div>
+  </div>
+
+</div>
+
+{% endblock %}

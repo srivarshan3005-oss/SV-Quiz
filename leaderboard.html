@@ -1,0 +1,128 @@
+{% extends "base.html" %}
+{% block title %}Leaderboard — SV Quiz{% endblock %}
+
+{% block content %}
+
+{% set avatar_colors = ['#2563eb','#0891b2','#059669','#7c3aed','#b45309','#dc2626','#0d9488'] %}
+{% set medals = ['1st','2nd','3rd'] %}
+
+<div class="page">
+
+  <div style="margin-bottom:1.5rem;">
+    <h2 style="margin-bottom:.25rem;">Leaderboard</h2>
+    <p style="font-size:.85rem;color:var(--c-text-3);">All-time results, sorted by score.</p>
+  </div>
+
+  <!-- Category filter -->
+  <div class="filter-bar" style="margin-bottom:1.5rem;">
+    <a href="{{ url_for('leaderboard') }}"
+       class="filter-btn {{ 'filter-btn--active' if cat_filter == 'all' }}">All</a>
+    {% for cat in categories %}
+    <a href="{{ url_for('leaderboard', cat=cat.id) }}"
+       class="filter-btn {{ 'filter-btn--active' if cat_filter == cat.id }}">
+      {{ cat.name }}
+    </a>
+    {% endfor %}
+  </div>
+
+  {% if not results %}
+  <div class="card" style="text-align:center;padding:3rem;color:var(--c-text-3);">
+    <p style="font-weight:500;margin-bottom:.3rem;">No results yet.</p>
+    <p style="font-size:.85rem;">Complete an assessment to appear here.</p>
+    <a href="{{ url_for('dashboard') }}" class="btn btn--primary btn--sm" style="margin-top:1.25rem;display:inline-flex;">
+      Go to Dashboard
+    </a>
+  </div>
+
+  {% else %}
+
+  {# Top-3 podium — only when 3+ results exist and filter is "all" #}
+  {% if results|length >= 3 %}
+  {% set top3 = results[:3] %}
+  <div class="lb-podium" style="margin-bottom:1.75rem;">
+    {# Visual order: 2nd | 1st | 3rd #}
+    {% for slot, rank in [(top3[1], 2), (top3[0], 1), (top3[2], 3)] %}
+    {% set acolor = avatar_colors[loop.index0 % avatar_colors|length] %}
+    {% set cdata  = cat_map.get(slot.category, {}) %}
+    <div class="podium-card podium-card--{{ rank }}st">
+      {% if slot.email == current_email %}
+        <div class="podium-card__badge">You</div>
+      {% endif %}
+      <div class="podium-card__rank">{{ medals[rank-1] }}</div>
+      <div class="podium-card__avatar" style="background:{{ acolor }};">
+        {{ slot.name[0]|upper }}
+      </div>
+      <div class="podium-card__name">{{ slot.name }}</div>
+      <div class="podium-card__score" style="color:{{ acolor }};">{{ slot.percentage }}%</div>
+      <div class="podium-card__cat">{{ cdata.get('name', slot.category) }}</div>
+    </div>
+    {% endfor %}
+  </div>
+  {% endif %}
+
+  <!-- Full table -->
+  <div class="lb-table">
+    <div class="lb-table__head">
+      <span>Rank</span>
+      <span>Participant</span>
+      <span>Assessment</span>
+      <span>Score</span>
+      <span>Correct</span>
+      <span>Status</span>
+    </div>
+
+    {% for r in results %}
+    {% set rank   = loop.index %}
+    {% set acolor = avatar_colors[loop.index0 % avatar_colors|length] %}
+    {% set cdata  = cat_map.get(r.category, {}) %}
+    {% set is_me  = (r.email == current_email) %}
+
+    <div class="lb-table__row {{ 'lb-table__row--me' if is_me }}">
+
+      <div>
+        <div class="rank-chip">{{ rank }}</div>
+      </div>
+
+      <div class="lb-user">
+        <div class="lb-user__avatar" style="background:{{ acolor }};">
+          {{ r.name[0]|upper }}
+        </div>
+        <div>
+          <div class="lb-user__name">
+            {{ r.name }}
+            {% if is_me %}<span class="me-tag">you</span>{% endif %}
+          </div>
+          <div class="lb-user__email">{{ r.email }}</div>
+        </div>
+      </div>
+
+      <div>
+        <div style="font-size:.85rem;font-weight:500;">{{ cdata.get('name', r.category) }}</div>
+        <div style="font-size:.72rem;color:var(--c-text-3);">{{ r.date[:10] }}</div>
+      </div>
+
+      <div style="font-weight:700;color:{{ 'var(--c-success)' if r.percentage >= 60 else 'var(--c-danger)' }};">
+        {{ r.percentage }}%
+      </div>
+
+      <div style="font-weight:500;">{{ r.correct }}/{{ r.total }}</div>
+
+      <div>
+        <span class="badge {{ 'badge--pass' if r.passed else 'badge--fail' }}">
+          {{ 'Pass' if r.passed else 'Fail' }}
+        </span>
+      </div>
+
+    </div>
+    {% endfor %}
+  </div>
+
+  <p style="text-align:center;margin-top:1rem;font-size:.75rem;color:var(--c-text-3);">
+    {{ results|length }} record{{ 's' if results|length != 1 }}
+  </p>
+
+  {% endif %}
+
+</div>
+
+{% endblock %}

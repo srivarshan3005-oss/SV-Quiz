@@ -1,0 +1,88 @@
+{% extends "base.html" %}
+{% block title %}Result — SV Quiz{% endblock %}
+
+{% block content %}
+
+<div class="page page--narrow">
+
+  <!-- Score banner -->
+  <div class="result-banner">
+    <div class="result-banner__label {{ 'result-banner__label--pass' if record.passed else 'result-banner__label--fail' }}">
+      {{ 'Pass' if record.passed else 'Fail' }}
+    </div>
+    <div class="result-banner__score">
+      {{ record.percentage }}<sup>%</sup>
+    </div>
+    <div class="result-banner__meta">
+      {{ cat.get('name', record.category) }} &nbsp;&middot;&nbsp; {{ record.date[:10] }}
+    </div>
+  </div>
+
+  <!-- Breakdown -->
+  <div class="result-stats">
+    <div class="r-cell">
+      <div class="r-cell__num">{{ record.total }}</div>
+      <div class="r-cell__lbl">Total</div>
+    </div>
+    <div class="r-cell">
+      <div class="r-cell__num" style="color:var(--c-success);">{{ record.correct }}</div>
+      <div class="r-cell__lbl">Correct</div>
+    </div>
+    <div class="r-cell">
+      <div class="r-cell__num" style="color:var(--c-danger);">{{ record.wrong }}</div>
+      <div class="r-cell__lbl">Wrong</div>
+    </div>
+    <div class="r-cell">
+      <div class="r-cell__num" style="color:var(--c-warning);">{{ record.skipped }}</div>
+      <div class="r-cell__lbl">Skipped</div>
+    </div>
+  </div>
+
+  <!-- Participant details -->
+  <div class="detail-card">
+    <h3>Participant</h3>
+    <div class="info-grid">
+      <div>
+        <label>Name</label>
+        <span>{{ record.name }}</span>
+      </div>
+      <div>
+        <label>Email</label>
+        <span>{{ record.email }}</span>
+      </div>
+      <div>
+        <label>Assessment</label>
+        <span>{{ cat.get('name', record.category) }}</span>
+      </div>
+      <div>
+        <label>Outcome</label>
+        <span>
+          <span class="badge {{ 'badge--pass' if record.passed else 'badge--fail' }}">
+            {{ 'Pass' if record.passed else 'Fail' }}
+          </span>
+        </span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Feedback -->
+  <div class="feedback-card">
+    <h3>{{ feedback_heading }}</h3>
+    <p>{{ feedback_detail }}</p>
+  </div>
+
+  <!-- Actions -->
+  <div class="result-actions">
+    <a href="{{ url_for('review') }}"
+       class="btn btn--secondary">Review answers</a>
+    <a href="{{ url_for('quiz', cat_id=record.category) }}"
+       class="btn btn--secondary">Retake</a>
+    <a href="{{ url_for('leaderboard') }}"
+       class="btn btn--primary">Leaderboard</a>
+    <a href="{{ url_for('dashboard') }}"
+       class="btn btn--secondary">Dashboard</a>
+  </div>
+
+</div>
+
+{% endblock %}

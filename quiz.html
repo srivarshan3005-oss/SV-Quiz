@@ -1,0 +1,113 @@
+{% extends "base.html" %}
+{% block title %}{{ category.name }} — SV Quiz{% endblock %}
+
+{% block content %}
+
+<div class="quiz-layout">
+
+  <!-- Main column -->
+  <div>
+
+    <!-- Top bar: category, progress, timer -->
+    <div class="quiz-topbar">
+      <div class="quiz-topbar__cat">
+        <div class="quiz-topbar__cat-dot" style="background:{{ category.color }};"></div>
+        {{ category.name }}
+      </div>
+
+      <div class="quiz-topbar__progress">
+        <div class="quiz-topbar__prog-lbl" id="prog-lbl">Question 1 of {{ total }}</div>
+        <div class="prog-bar">
+          <div class="prog-bar__fill" id="prog-fill"
+               style="width:{{ (1/total*100)|round }}%;background:{{ category.color }};"></div>
+        </div>
+      </div>
+
+      <div class="timer" id="timer-box">
+        <svg width="44" height="44" style="transform:rotate(-90deg);flex-shrink:0;">
+          <circle cx="22" cy="22" r="18" fill="none" stroke="var(--c-border)" stroke-width="3"/>
+          <circle id="timer-arc"
+                  cx="22" cy="22" r="18"
+                  fill="none" stroke="var(--c-primary)" stroke-width="3"
+                  stroke-dasharray="{{ 2 * 3.14159 * 18 }}"
+                  stroke-dashoffset="0"
+                  stroke-linecap="round"
+                  style="transition:stroke-dashoffset .9s linear,stroke .3s;"/>
+        </svg>
+        <div>
+          <div class="timer__digits" id="timer-num">30</div>
+          <div class="timer__lbl">sec</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Question -->
+    <div class="q-card">
+      <div class="q-card__meta">
+        <span class="q-card__num" id="q-num">Question 1 of {{ total }}</span>
+      </div>
+      <p class="q-card__text" id="q-text"></p>
+      <div class="options" id="options"></div>
+    </div>
+
+    <!-- Navigation -->
+    <div class="q-nav">
+      <button id="btn-prev" class="btn btn--secondary" disabled>&#8592; Previous</button>
+      <span class="q-nav__count" id="ans-count">0 / {{ total }} answered</span>
+      <button id="btn-next"   class="btn btn--primary">Next &#8594;</button>
+      <button id="btn-submit" class="btn btn--danger"  style="display:none;">Submit</button>
+    </div>
+
+  </div>
+
+  <!-- Sidebar: question grid -->
+  <div class="sidebar">
+    <div class="sidebar__title">Questions</div>
+    <div class="q-grid" id="q-grid"></div>
+
+    <div class="sidebar__legend">
+      <div class="legend-item">
+        <div class="legend-dot" style="background:var(--c-success);"></div>
+        Answered
+      </div>
+      <div class="legend-item">
+        <div class="legend-dot" style="background:var(--c-primary);"></div>
+        Current
+      </div>
+      <div class="legend-item">
+        <div class="legend-dot" style="background:var(--c-border);"></div>
+        Not answered
+      </div>
+    </div>
+
+    <div class="sidebar__pct">
+      <div class="sidebar__pct-num" id="grid-pct">0%</div>
+      <div class="sidebar__pct-lbl">Complete</div>
+    </div>
+
+    <button id="btn-early-sub" class="btn btn--danger btn--sm btn--full">Submit now</button>
+  </div>
+
+</div>
+
+<!-- Confirm modal -->
+<div class="modal-bg" id="modal">
+  <div class="modal">
+    <div class="modal__title">Submit assessment?</div>
+    <p class="modal__body" id="modal-msg"></p>
+    <div class="modal__actions">
+      <button id="modal-cancel"  class="btn btn--secondary btn--sm">Cancel</button>
+      <button id="modal-confirm" class="btn btn--danger   btn--sm">Submit</button>
+    </div>
+  </div>
+</div>
+
+<!-- Data for JavaScript -->
+<script type="application/json" id="q-data">{{ questions_json | safe }}</script>
+<div id="cat-id" style="display:none;">{{ category.id }}</div>
+
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/quiz.js') }}"></script>
+{% endblock %}

@@ -1,0 +1,184 @@
+{% extends "base.html" %}
+{% block title %}Review — SV Quiz{% endblock %}
+
+{% block content %}
+
+{% set filter = request.args.get('filter', 'all') %}
+{% set page   = request.args.get('page', 0)|int %}
+
+{# Build annotated list of all Q+A pairs #}
+{% set qa_list = [] %}
+{% for i in range(record.questions|length) %}
+  {% set q       = record.questions[i] %}
+  {% set chosen  = record.answers.get(i|string) %}
+  {% set skipped = (chosen is none or chosen == -1) %}
+  {% set correct = (not skipped and chosen == q.correct) %}
+  {% set _ = qa_list.append({'i': i, 'q': q, 'chosen': chosen,
+                              'skipped': skipped, 'correct': correct}) %}
+{% endfor %}
+
+{# Apply filter #}
+{% if filter == 'correct' %}
+  {% set items = qa_list|selectattr('correct')|list %}
+{% elif filter == 'wrong' %}
+  {% set items = qa_list|rejectattr('correct')|rejectattr('skipped')|list %}
+{% elif filter == 'skipped' %}
+  {% set items = qa_list|selectattr('skipped')|list %}
+{% else %}
+  {% set items = qa_list %}
+{% endif %}
+
+{% set page    = [page, 0]|max %}
+{% set _maxidx = [(items|length - 1), 0]|max %}
+{% set page    = [page, _maxidx]|min %}
+{% set current = items[page] if items else none %}
+
+{% set n_correct = qa_list|selectattr('correct')|list|length %}
+{% set n_wrong   = qa_list|rejectattr('correct')|rejectattr('skipped')|list|length %}
+{% set n_skipped = qa_list|selectattr('skipped')|list|length %}
+
+<div class="page">
+
+  <div style="display:flex;align-items:flex-start;justify-content:space-between;flex-wrap:wrap;gap:.75rem;margin-bottom:1.25rem;">
+    <div>
+      <h2 style="margin-bottom:.2rem;">Review answers</h2>
+      <p style="font-size:.85rem;color:var(--c-text-3);">
+        {{ cat.get('name','') }} &nbsp;&middot;&nbsp;
+        {{ record.correct }}/{{ record.total }} correct
+      </p>
+    </div>
+    <div class="filter-bar">
+      <a href="?filter=all"
+         class="filter-btn {{ 'filter-btn--active' if filter == 'all' }}">
+        All ({{ qa_list|length }})
+      </a>
+      <a href="?filter=correct"
+         class="filter-btn {{ 'filter-btn--active' if filter == 'correct' }}">
+        Correct ({{ n_correct }})
+      </a>
+      <a href="?filter=wrong"
+         class="filter-btn {{ 'filter-btn--active' if filter == 'wrong' }}">
+        Wrong ({{ n_wrong }})
+      </a>
+      <a href="?filter=skipped"
+         class="filter-btn {{ 'filter-btn--active' if filter == 'skipped' }}">
+        Skipped ({{ n_skipped }})
+      </a>
+    </div>
+  </div>
+
+  {% if not items %}
+  <div class="card" style="text-align:center;padding:2.5rem;color:var(--c-text-3);">
+    No questions match this filter.
+  </div>
+
+  {% else %}
+  <div class="review-layout">
+
+    <!-- Question panel -->
+    <div>
+      <div class="q-card">
+        <div class="q-card__meta">
+          <span class="q-card__num">Question {{ current.i + 1 }}</span>
+          {% if current.skipped %}
+            <span class="badge badge--neutral">Skipped</span>
+          {% elif current.correct %}
+            <span class="badge badge--pass">Correct</span>
+          {% else %}
+            <span class="badge badge--fail">Wrong</span>
+          {% endif %}
+        </div>
+
+        <p class="q-card__text">{{ current.q.question }}</p>
+
+        {% set labels = ['A','B','C','D'] %}
+        <div class="options">
+          {% for opt in current.q.options %}
+          {% set idx        = loop.index0 %}
+          {% set is_correct = (idx == current.q.correct) %}
+          {% set is_chosen  = (idx == current.chosen and not current.skipped) %}
+
+          <div class="option-btn
+            {{ 'option-btn--correct' if is_correct else '' }}
+            {{ 'option-btn--wrong'   if is_chosen and not is_correct else '' }}"
+            style="cursor:default;">
+            <span class="opt-key">{{ labels[idx] }}</span>
+            <span class="opt-text">{{ opt }}</span>
+            {% if is_correct %}
+              <span class="opt-icon" style="color:var(--c-success);">&#10003;</span>
+            {% elif is_chosen and not is_correct %}
+              <span class="opt-icon" style="color:var(--c-danger);">&#10007;</span>
+            {% endif %}
+          </div>
+          {% endfor %}
+        </div>
+
+        {% if current.skipped %}
+        <div class="skipped-note">
+          This question timed out or was not answered.
+          The correct option is highlighted above.
+        </div>
+        {% endif %}
+      </div>
+
+      <div class="review-nav">
+        {% if page > 0 %}
+          <a href="?filter={{ filter }}&page={{ page - 1 }}" class="btn btn--secondary btn--sm">
+            &larr; Previous
+          </a>
+        {% else %}
+          <button class="btn btn--secondary btn--sm" disabled>&larr; Previous</button>
+        {% endif %}
+
+        <span class="review-nav__info">{{ page + 1 }} / {{ items|length }}</span>
+
+        {% if page < items|length - 1 %}
+          <a href="?filter={{ filter }}&page={{ page + 1 }}" class="btn btn--primary btn--sm">
+            Next &rarr;
+          </a>
+        {% else %}
+          <button class="btn btn--primary btn--sm" disabled>Next &rarr;</button>
+        {% endif %}
+      </div>
+    </div>
+
+    <!-- Sidebar: answer map -->
+    <div style="position:sticky;top:72px;">
+      <div class="card" style="padding:1.1rem;">
+        <div class="sidebar__title">Answer map</div>
+
+        <div class="ans-grid">
+          {% for item in items %}
+          <a href="?filter={{ filter }}&page={{ loop.index0 }}"
+             class="ans-dot {{ 'ans-dot--current' if loop.index0 == page }}"
+             style="background:{{ 'var(--c-warning)' if item.skipped else ('var(--c-success)' if item.correct else 'var(--c-danger)') }};"
+             title="Q{{ item.i + 1 }}">
+            {{ item.i + 1 }}
+          </a>
+          {% endfor %}
+        </div>
+
+        <div style="display:flex;flex-direction:column;gap:.3rem;margin-bottom:1rem;">
+          <div class="legend-item">
+            <div class="legend-dot" style="background:var(--c-success);"></div>Correct
+          </div>
+          <div class="legend-item">
+            <div class="legend-dot" style="background:var(--c-danger);"></div>Wrong
+          </div>
+          <div class="legend-item">
+            <div class="legend-dot" style="background:var(--c-warning);"></div>Skipped
+          </div>
+        </div>
+
+        <a href="{{ url_for('result') }}" class="btn btn--secondary btn--sm btn--full">
+          &larr; Back to result
+        </a>
+      </div>
+    </div>
+
+  </div>
+  {% endif %}
+
+</div>
+
+{% endblock %}
